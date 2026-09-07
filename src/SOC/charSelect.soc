@@ -1,0 +1,5 @@
+Character
+SkinName = skeleton
+DisplayName = Skeleton
+TagTextColor = SKINCOLOR_WHITE
+TagOutlineColor = SKINCOLOR_BLACK

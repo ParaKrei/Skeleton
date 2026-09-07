@@ -1,0 +1,215 @@
+{ "frames": [
+   {
+    "filename": "SKRT0",
+    "frame": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKRT1",
+    "frame": { "x": 47, "y": 0, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKRT2",
+    "frame": { "x": 94, "y": 0, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKRT3",
+    "frame": { "x": 141, "y": 0, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKRT4",
+    "frame": { "x": 188, "y": 0, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKRT5",
+    "frame": { "x": 235, "y": 0, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKRT6",
+    "frame": { "x": 0, "y": 68, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKRI0",
+    "frame": { "x": 47, "y": 68, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKTR0",
+    "frame": { "x": 94, "y": 68, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST0",
+    "frame": { "x": 141, "y": 68, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST1",
+    "frame": { "x": 188, "y": 68, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST2",
+    "frame": { "x": 235, "y": 68, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST3",
+    "frame": { "x": 0, "y": 136, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST4",
+    "frame": { "x": 47, "y": 136, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST5",
+    "frame": { "x": 94, "y": 136, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST6",
+    "frame": { "x": 141, "y": 136, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST7",
+    "frame": { "x": 188, "y": 136, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST8",
+    "frame": { "x": 235, "y": 136, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST9",
+    "frame": { "x": 0, "y": 204, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST10",
+    "frame": { "x": 47, "y": 204, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   },
+   {
+    "filename": "SKST11",
+    "frame": { "x": 94, "y": 204, "w": 47, "h": 68 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 47, "h": 68 },
+    "sourceSize": { "w": 47, "h": 68 },
+    "duration": 114
+   }
+ ],
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.18.2-x64",
+  "image": "Metal.png",
+  "format": "I8",
+  "size": { "w": 282, "h": 272 },
+  "scale": "1",
+  "layers": [
+   { "name": "Metal" },
+   { "name": "Feet", "group": "Metal" },
+   { "name": "RFoot", "group": "Feet", "opacity": 255, "blendMode": "normal" },
+   { "name": "LFoot", "group": "Feet", "opacity": 255, "blendMode": "normal" },
+   { "name": "fix", "group": "Feet", "opacity": 255, "blendMode": "normal" },
+   { "name": "Torso", "group": "Metal", "opacity": 255, "blendMode": "normal" },
+   { "name": "Arm", "group": "Metal", "opacity": 255, "blendMode": "normal" },
+   { "name": "Head", "group": "Metal" },
+   { "name": "Base", "group": "Head", "opacity": 255, "blendMode": "normal" },
+   { "name": "Nose", "group": "Head", "opacity": 255, "blendMode": "normal" },
+   { "name": "EyeMask", "group": "Head", "opacity": 255, "blendMode": "normal" },
+   { "name": "REye", "group": "Head", "opacity": 255, "blendMode": "normal" },
+   { "name": "Hand", "group": "Metal", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}
