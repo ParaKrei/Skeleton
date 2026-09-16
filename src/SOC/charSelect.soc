@@ -3,3 +3,14 @@ SkinName = skeleton
 DisplayName = Skeleton
 TagTextColor = SKINCOLOR_WHITE
 TagOutlineColor = SKINCOLOR_BLACK
+PlayerText = ^5The most terrifying thing has arrived to the world of SRB2,
+and ^0it's ^5immortal wrath won't be merciful.
+
+^0Ability:^5 Crouch
+Press spin; self-explanatory.
+
+^0Ability:^5 Hover
+This is ^4Metal Sonic^5's hover, but mapped to spin instead.
+
+^0Tip:^5 Some popular movement tech from the Source Engine work here too, so try them out!
+#

@@ -25,12 +25,32 @@ These taunts are triggered randomly upon button press.
 [DONE]
 
 Trailer plans:
-1:
-Using O' Fortuna, in Blender,
-have a giant cube with the Skeleton's front-facing sprite as a texture tiled slowly consume a city.
-Have multiple SRB2 characters react to the scene, with Tails using the infamous TGT face, and start the hug explosion sound.
-After a bit, hard-cut to the end of a faux toy commerical (maybe have Sonic say "IT EVEN HAS IDTECH PHYSICS!") on the Skeleton, then to an actual trailer.
+--Intro--
+Using Dies irae, in Blender,
+have a giant cube with the Skeleton's front-facing sprite as a tiled texture slowly consume a city.
+Have Tails, using the infamous TGT face, react to the Skeleton cube, and start the hug explosion sound.
+Before Tails dies, hard-cut to the end of a faux commerical (have Sonic say "IT EVEN HAS IDTECH PHYSICS!") on the Skeleton, then to an actual trailer.
+The commerical has a textured gray background, and the Skeleton is on the right of the screen, on top of a Lazy Susan rotating slowly.
+
 --The Actual Trailer--
 A simple gameplay montage showing off the features of the Skeleton; no text, no frills.
 After all of the features are shown, use the hug explosion to transition to a title drop.
 Maybe use Juno's "THE SKELETON APPEARS"?
+
+--The gameplay--
+Natrually show off features in this order:
+The new physics.
+Dash mode.
+Crouching.
+Crouch-jumping.
+Floating.
+Water running.
+Swimming.
+Wall destruction.
+The inability to die.
+Floor breaking.
+Spin wheel usage.
+Minecart destruction.
+Eggrobo destruction.
+Taunts.
+Hug stuff.
