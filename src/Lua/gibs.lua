@@ -49,10 +49,12 @@ addHook("MobjThinker", function(ring)
 				ring.spinamt = FixedAngle(P_SignedRandom()*FU)
 			end
 
-			if ring.eflags & MFE_JUSTHITFLOOR then
-				ring.spinamt = FixedDiv($, FU+(FU/2))
-			else
-				ring.spriteroll = $+ring.spinamt
+			if abs(ring.spinamt) >= FU then
+				if ring.eflags & MFE_JUSTHITFLOOR then
+					ring.spinamt = FixedDiv($, FU+(FU/2))
+				else
+					ring.spriteroll = $+ring.spinamt
+				end
 			end
 		end
 	end

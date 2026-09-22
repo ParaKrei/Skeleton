@@ -262,57 +262,91 @@ skl["getMismatchedObjZBBoxZ"] = function(obj, options)
 	return targetNames
 end
 
---Helper function to get the FOF below the target mobj.
-skl["getFOFBelowMobj"] = function(mobj)
-	if objectExists(mobj.floorrover) and objectExists(mobj.ceilingrover) then
-		if P_MobjFlip(mobj) == -1 then
-			return mobj.ceilingrover
-		else
-			return mobj.floorrover
-		end
-	elseif not(objectExists(mobj.floorrover)) then
-		return mobj.ceilingrover
-	elseif not(objectExists(mobj.ceilingrover)) then
-		return mobj.floorrover
+--Helper function to get the FOF below the target player.
+skl["getFOFBelowPlayer"] = function(ply)
+	if P_MobjFlip(ply.mo) == -1 then
+		if objectExists(ply.mo.ceilingrover) then
+			return ply.mo.ceilingrover
+		else return nil end
 	else
-		return nil
+		if objectExists(ply.mo.floorrover) then
+			return ply.mo.floorrover
+		else return nil end
 	end
 end
-local getFOFBelowMobj = skl.getFOFBelowMobj --Required for local calls
+local getFOFBelowPlayer = skl.getFOFBelowPlayer --Required for local calls
 
---Re-implementation of P_CheckBustableBlocks from the SRB2 source code (https://git.do.srb2.org/STJr/SRB2/-/blob/SRB2_release_2.2.15/src/p_user.c#L2713).
-skl["P_BustFOF"] = function(fof, mobj, targetAll)
+--Height checking for FOF busting.
+skl["P_IsFOFBustable"] = function(fof, ply, targetAll)
 	if targetAll == nil then targetAll = false end
-	if fof == nil or not(fof.fofflags & FOF_EXISTS) or (not(targetAll) and not(fof.fofflags & FOF_BUSTUP)) then return nil end
+	if fof == nil or not(fof.fofflags & FOF_EXISTS) or (not(targetAll) and not(fof.fofflags & FOF_BUSTUP)) then return false end
 
-	if mobj ~= nil then
-		--Height checks.
+	local topheight = fof.topheight
+	local bottomheight = fof.bottomheight
+	local isBustable = true
+
+	if ply.mo ~= nil then
+		if P_MobjFlip(ply.mo) == -1 then
+			if ply.powers[pw_strong] & STR_FLOOR and not(ply.powers[pw_strong] & STR_CEILING) and ply.mo.z > topheight then return false end
+			if ply.powers[pw_strong] & STR_CEILING and not(ply.powers[pw_strong] & STR_FLOOR) and ply.mo.z+ply.mo.height < bottomheight then return false end
+		else
+			if ply.powers[pw_strong] & STR_FLOOR and not(ply.powers[pw_strong] & STR_CEILING) and ply.mo.z < bottomheight then return false end
+			if ply.powers[pw_strong] & STR_CEILING and not(ply.powers[pw_strong] & STR_FLOOR) and ply.mo.z+ply.mo.height > topheight then return false end
+		end
+
+		if ply.powers[pw_strong] & (STR_FLOOR|STR_CEILING) then
+			topheight = $-ply.mo.momz
+			bottomheight = $-ply.mo.momz
+		end
+
 		if fof.bustflags & FB_ONLYBOTTOM then
-			if not(mobj.z + mobj.momz + mobj.height < fof.bottomheight) then return nil end
-			if not(mobj.z + mobj.momz > fof.bottomheight) then return nil end
+			if ply.mo.z + ply.mo.momz + ply.mo.height < bottomheight then return false end
+			if ply.mo.z + ply.mo.height > bottomheight then return false end
 		else
 			switch(fof.busttype)
 				.case(BT_TOUCH, function()
-					if not(mobj.z + mobj.momz > fof.topheight) then return nil end
-					if not(mobj.z + mobj.momz + mobj.height < fof.bottomheight) then return nil end
+					if ply.mo.z + ply.mo.momz > topheight then isBustable = false end
+					if isBustable then --To stop the checks from triggering twice.
+						if ply.mo.z + ply.mo.momz + ply.mo.height < bottomheight then isBustable = false end
+					end
 				end)
 				.case(BT_SPINBUST, function()
-					if not(mobj.z + mobj.momz > fof.topheight) then return nil end
-					if not(mobj.z + mobj.height < fof.bottomheight) then return nil end
+					if ply.mo.z + ply.mo.momz > topheight then isBustable = false end
+					if isBustable then --To stop the checks from triggering twice.
+						if ply.mo.z + ply.mo.height < bottomheight then isBustable = false end
+					end
 				end)
 				.default(function()
-					if not(mobj.z >= fof.topheight) then return nil end
-					if not(mobj.z + mobj.height < fof.bottomheight) then return nil end
+					if ply.mo.z > topheight then isBustable = false end --Changed to ">" instead of ">=" so the player can be on top of the FOF.
+					if isBustable then --To stop the checks from triggering twice.
+						if ply.mo.z + ply.mo.height < bottomheight then isBustable = false end
+					end
 				end)
 			.process()
 		end
+	else
+		return false
+	end
 
-		--Delay the mobj's fall for a little bit.
-		if (fof.busttype == BT_TOUCH or fof.busttype == BT_SPINBUST) and mobj.z >= fof.topheight then
-			mobj.momz = $ >> 1
+	return isBustable
+end
+local P_IsFOFBustable = skl.P_IsFOFBustable --Required for local calls
+
+--Re-implementation of P_CheckBustableBlocks from the SRB2 source code (https://git.do.srb2.org/STJr/SRB2/-/blob/SRB2_release_2.2.15/src/p_user.c#L2713).
+skl["P_BustFOF"] = function(fof, ply, targetAll)
+	if targetAll == nil then targetAll = false end
+	if fof == nil or not(fof.fofflags & FOF_EXISTS) or (not(targetAll) and not(fof.fofflags & FOF_BUSTUP)) then return nil end
+
+	if ply.mo ~= nil then
+		--Height checks.
+		if P_IsFOFBustable(fof, ply, targetAll) == false then return nil end
+
+		--Delay the player's fall for a little bit.
+		if (fof.busttype == BT_TOUCH or fof.busttype == BT_SPINBUST) and ply.mo.z >= fof.topheight then
+			ply.mo.momz = $ >> 1
 		elseif fof.busttype == BT_TOUCH then
-			mobj.momx = $ >> 1
-			mobj.momy = $ >> 1
+			ply.mo.momx = $ >> 1
+			ply.mo.momy = $ >> 1
 		end
 	end
 
@@ -321,49 +355,18 @@ skl["P_BustFOF"] = function(fof, mobj, targetAll)
 
 	--Run the linedef execution!
 	if fof.bustflags & FB_EXECUTOR then
-		P_LinedefExecute(fof.busttag, mobj, fof.sector)
+		P_LinedefExecute(fof.busttag, ply.mo, fof.sector)
 	end
 
 	return true
 end
 local P_BustFOF = skl.P_BustFOF --Required for local calls
 
---Same as above, but only checks.
-skl["P_IsFOFBustable"] = function(fof, mobj, targetAll)
-	if targetAll == nil then targetAll = false end
-	if fof == nil or not(fof.fofflags & FOF_EXISTS) or (not(targetAll) and not(fof.fofflags & FOF_BUSTUP)) then return false end
+--Helper function to bust up FOFs below an player.
+skl["P_CrumbleFOFBelowPlayer"] = function(ply)
+	local fof = getFOFBelowPlayer(ply)
 
-	if mobj ~= nil then
-		--Height checks.
-		if fof.bustflags & FB_ONLYBOTTOM then
-			if not(mobj.z + mobj.momz + mobj.height < fof.bottomheight) then return false end
-			if not(mobj.z + mobj.momz > fof.bottomheight) then return false end
-		else
-			switch(fof.busttype)
-				.case(BT_TOUCH, function()
-					if not(mobj.z + mobj.momz > fof.topheight) then return false end
-					if not(mobj.z + mobj.momz + mobj.height < fof.bottomheight) then return false end
-				end)
-				.case(BT_SPINBUST, function()
-					if not(mobj.z + mobj.momz > fof.topheight) then return false end
-					if not(mobj.z + mobj.height < fof.bottomheight) then return false end
-				end)
-				.default(function()
-					if not(mobj.z >= fof.topheight) then return false end
-					if not(mobj.z + mobj.height < fof.bottomheight) then return false end
-				end)
-			.process()
-		end
-	end
-
-	return true
-end
-
---Helper function to bust up FOFs below an mobj.
-skl["P_CrumbleFOFBelowMobj"] = function(mobj)
-	local fof = getFOFBelowMobj(mobj)
-
-	if P_BustFOF(fof, mobj) == nil then return nil else return true end
+	if P_BustFOF(fof, ply) == nil then return nil else return true end
 end
 
 --Helper function to return if any game control is pressed through the input library.
@@ -500,72 +503,6 @@ skl["closestMobjFromList"] = function(origin, challengers)
 	return closestObj
 end
 
---DEPRECATED; COULDN'T GET THIS TO WORK WITHOUT BREAKING SLOPES, IF YOU CAN, POWER TO YOU.
---Try Move from Position in all Directions.
---Does what it says on the tin.
---Returns if TryMove was successful in ANY direction.
--- skl["TMfPiaD"] = function(mobj, options)
--- 	if options == nil then
--- 		options = {
--- 			dist = 1*FU,
--- 			dropoff = false,
--- 			restorePos = false,
--- 			debug = false,
--- 		}
--- 	end
--- 	if options.dist == nil then options.dist = 1*FU end
--- 	if options.dropoff == nil then options.dropoff = false end
--- 	if options.restorePos == nil then options.restorePos = false end
--- 	if options.debug == nil then options.debug = false end
-
--- 	local angTbl = {
--- 		0,
--- 		ANGLE_45,
--- 		ANGLE_90,
--- 		ANGLE_135,
--- 		ANGLE_180,
--- 		ANGLE_270,
--- 		ANGLE_315,
--- 		ANGLE_MAX
--- 	}
-
--- 	local wasOnGround = P_IsObjectOnGround(mobj)
-	
--- 	local pushFailed = true
--- 	for d=1,#angTbl do
--- 		local velo = {
--- 			x=P_ReturnThrustX(nil, angTbl[d], options.dist),
--- 			y=P_ReturnThrustY(nil, angTbl[d], options.dist)
--- 		}
--- 		local lastPos = {
--- 			x=mobj.x,
--- 			y=mobj.y,
--- 			z=mobj.z
--- 		}
-
--- 		if options.debug then print("Trying to move mobj to x: "..tostring(mobj.x+velo.x)..", y: "..tostring(mobj.y+velo.y)) end
--- 		if P_TryMove(mobj, mobj.x+velo.x, mobj.y+velo.y, options.dropoff) then
--- 			pushFailed = false
--- 			if options.restorePos then
--- 				local newZ = lastPos.z
--- 				if wasOnGround then
--- 					if P_MobjFlip(mobj) == -1 then
--- 						newZ = mobj.ceilingz-mobj.height
--- 					else
--- 						newZ = mobj.floorz
--- 					end
-					
--- 				end
-				
--- 				moveMobj(mobj, lastPos.x, lastPos.y, newZ)
--- 			end
--- 			break
--- 		end
--- 	end
-
--- 	return not(pushFailed)
--- end
-
 --A little function to nicely teleport a player somewhere while also making it look nice.
 skl["teleportToPos"] = function(ply, x, y, z, angle, flashing)
 	if angle == nil then angle = 0 end
@@ -594,23 +531,6 @@ skl["toStarpostOrSpawn"] = function(ply, forceSpawn)
 
 	--Restore to starpost OR player spawn(s).
 	if ply.starpostnum == 0 then --No star post has been set.
-		--[[ OLD PLAYER COOP SPAWN FETCHER.
-		local finalPosition = {x=0,y=0,z=0}
-		local finalAngle = 0
-
-		--Randomize.
-		local spawns = {}
-		for mobj in mapthings.iterate do
-			if mobj.type > 32 then continue end
-			table.insert(spawns, mobj)
-		end
-		local target = spawns[P_RandomRange(1, #spawns)]
-		finalPosition = {x=target.x, y=target.y, z=target.z}
-		finalAngle = target.angle
-
-		teleportToPos(ply, finalPosition.x*FU, finalPosition.y*FU, finalPosition.z*FU, finalAngle, true)
-		]]
-
 		teleportToPos(ply, ply.spawnx, ply.spawny, ply.spawnz, ply.spawnangle, true)
 		if ply.spawnflip then ply.mo.flags2 = $ | MF2_OBJECTFLIP else ply.mo.flags2 = $ & ~MF2_OBJECTFLIP end
 		if ply.spawn2d then ply.mo.flags2 = $ | MF2_TWOD else ply.mo.flags2 = $ & ~MF2_TWOD end

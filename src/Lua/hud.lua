@@ -11,8 +11,8 @@ addHook("HUD", function(v, ply)
 	local skel = ply.skeleton
 
 	local minecart = ply.powers[pw_carry] == CR_MINECART
-	local fof = skl.getFOFBelowMobj(ply.mo)
-	local canBreakFOF = skl.P_IsFOFBustable(fof, ply.mo)
+	local fof = skl.getFOFBelowPlayer(ply)
+	local canBreakFOF = skl.P_IsFOFBustable(fof, ply)
 
 	local button = {
 		x=160,y=190-3,

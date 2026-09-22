@@ -2,6 +2,8 @@
 	The main file.
 ]]
 
+local debug = false --DON'T FORGET TO SET THIS TO FALSE ON RELEASE!
+
 --Initalize the table.
 addHook("PlayerSpawn", function(ply)
 	if ply.spectator then return end --Don't try to do anything if the player is a spectator.
@@ -11,21 +13,6 @@ addHook("PlayerSpawn", function(ply)
 			ogViewHeight = ply.viewheight,
 			crouching = false,
 			crouchWalking = false,
-			-- lastTrackers = {
-			-- 	lastPos = {}, --Yes, I'm saving the player's position in multiple different states.
-			-- 	lastGroundedPos = {}, --Same as above, but grounded.
-			-- 	lastAngle = {}, --Might as well do angles too.
-			-- 	lastGroundedAngle = {}, --Same as above, but grounded.
-			-- 	lastFlip = {}, --Saving gravity flipping as well.
-			-- 	lastGroundedFlip = {}, --Same as above, but grounded.
-			-- 	last2D = {}, --Saving 2D mode as well.
-			-- 	lastGrounded2D = {}, --Same as above, but grounded.
-			-- 	lastTickers = {0, 0}, --Sets the saving position in the tables above.
-			-- },
-			-- tickersMax = 5,
-			-- stuck = false,
-			-- stuckTimer = 0,
-			-- timesTeleported = {0,0,0,0}, --Tracks how many times a stuck function was ran (last, last grounded, push, starpost/spawn).
 			wasInZoomTube = false,
 			gotCrushed = false,
 			lastCrushed = 0, --Tracks what tic the player got crushed on.
@@ -52,21 +39,6 @@ addHook("PlayerSpawn", function(ply)
 	skel.crouching = false
 	skel.crouchWalking = false
 
-	--DEPRECATED; COULDN'T GET THIS TO WORK WITHOUT BREAKING SLOPES, IF YOU CAN, POWER TO YOU.--
-	-- for i=0,skel.tickersMax do
-	-- 	skel.lastTrackers.lastPos[i] = {x=0,y=0,z=0}
-	-- 	skel.lastTrackers.lastGroundedPos[i] = {x=0,y=0,z=0}
-	-- 	skel.lastTrackers.lastAngle[i] = 0
-	-- 	skel.lastTrackers.lastGroundedAngle[i] = 0
-	-- 	skel.lastTrackers.lastFlip[i] = 0
-	-- 	skel.lastTrackers.lastGroundedFlip[i] = 0
-	-- 	skel.lastTrackers.last2D[i] = 0
-	-- 	skel.lastTrackers.lastGrounded2D[i] = 0
-	-- end
-	-- skel.stuck = false
-	-- skel.stuckTimer = 0
-	-- for i=1,4 do skel.timesTeleported[i] = 0 end
-
 	skel.wasInZoomTube = false
 	skel.gotCrushed = false
 	skel.lastCrushed = leveltime
@@ -75,7 +47,9 @@ addHook("PlayerSpawn", function(ply)
 
 	skel.onSpinWheel = false
 	skel.lastSectorTag = -1
+	skel.wjhTimer = 0
 
+	skel.cueBreak = false
 	skel.raise.state = -1
 	skel.raise.lastFrame = 0
 	skel.raise.lastTic = leveltime
@@ -204,16 +178,6 @@ addHook("PlayerThink", function(ply)
 
 	--Murder mode.
 	ply.powers[pw_strong] = STR_ATTACK|STR_SPIKE
-	
-	--DEPRECATED; COULDN'T GET THIS TO WORK WITHOUT BREAKING SLOPES, IF YOU CAN, POWER TO YOU.--
-	-- if skel.stuckTimer > 0 then skel.stuckTimer = $-1 end
-
-	-- if ply.pflags & PF_SPINNING and skel.stuckTimer == 0 then
-	-- 	ply.pflags = $ & ~PF_SPINNING
-	-- 	ply.mo.state = S_PLAY_STND
-	-- end
-
-	-- if skel.stuckTimer == 0 then for i=1,4 do skel.timesTeleported[i] = 0 end end --Reset timesTeleported.
 
 	--Initalize the break animation.
 	if skel.cueBreak then
@@ -229,7 +193,7 @@ addHook("PlayerThink", function(ply)
 	local check = ply.mo.state ~= S_SKEL_BREAK and not ply.skeleton.compat.hugs.beingHugged and not ply.skeleton.taunts.active and not P_PlayerInPain(ply)
 	local checkPainless = ply.mo.state ~= S_SKEL_BREAK and not ply.skeleton.compat.hugs.beingHugged and not ply.skeleton.taunts.active
 
-	if ply.cmd.buttons & BT_SPIN and check then
+	if ply.cmd.buttons & BT_SPIN and check and ply.powers[pw_carry] == CR_NONE then
 		hoverAbility(ply) --CA_FLOAT re-implemented in Lua.
 
 		--Activate any spin wheels the playe is on.
@@ -276,12 +240,12 @@ addHook("PlayerThink", function(ply)
 		end
 
 		--Break the floor beneath you.
-		skl.P_CrumbleFOFBelowMobj(ply.mo)
+		skl.P_CrumbleFOFBelowPlayer(ply)
 	end
 
 	--Source Engine-esque crouch-jump implementation (this was not taken from Gordon Freeman, as he wasn't public when this code was created for a different project).
 	--I don't even know if Gordon HAS this yet. [message written on 2/10/2026]
-	if ply.powers[pw_carry] == CR_ZOOMTUBE then
+	if ply.powers[pw_carry] & CR_ZOOMTUBE then
 		ply.mo.spritexscale = 2*FU
 		ply.mo.spriteyscale = FU/2
 		if skl.objectExists(skel.shieldObj) then
@@ -297,6 +261,7 @@ addHook("PlayerThink", function(ply)
 	else
 		if skel.wasInZoomTube then
 			ply.viewheight = ply.skeleton.ogViewHeight
+			fixZ(ply, true)
 			ply.mo.spritexscale = FU
 			ply.mo.spriteyscale = FU
 			if skl.objectExists(skel.shieldObj) then
@@ -474,6 +439,8 @@ addHook("PostThinkFrame", function()
 		if ply.skeleton.compat.gotHit and leveltime > ply.skeleton.compat.gotHitOnTic+1 then
 			ply.skeleton.compat.gotHit = false
 		end
+
+		ply.skeleton.wasInZoomTube = ply.powers[pw_carry] & CR_ZOOMTUBE ~= 0
 	end
 end)
 
@@ -546,7 +513,7 @@ addHook("ShouldDamage", function(target, cause, src, dmg, dmgType)
 	local ply = target.player
 	local skel = ply.skeleton
 
-	if cause == nil and src == nil and dmg == 1 and dmgType & skl.DMG_SKLDTH then --Unique suicide command handler.
+	if cause == nil and src == nil and dmg == 1 and dmgType == skl.DMG_SKLDTH then --Unique suicide command handler.
 		return true
 	elseif dmgType == DMG_CRUSHED then --Track crusher damage for teleportation.
 		if leveltime == skel.lastCrushed+1 then --Something has gone horribly wrong.
@@ -566,8 +533,10 @@ addHook("ShouldDamage", function(target, cause, src, dmg, dmgType)
 			skel.gotCrushed = true
 			skel.triedSnap = false
 		end
+
+		return false
 	elseif not G_CoopGametype() and not G_CompetitionGametype() then --Use (most of) the original death code if in a PVP mode.
-		if dmgType & DMG_DEATHPIT or dmgType & DMG_CRUSHED then
+		if dmgType == DMG_DEATHPIT or dmgType == DMG_CRUSHED then
 			return false
 		else
 			return nil
@@ -646,7 +615,7 @@ addHook("MobjDeath", function(target, cause, src, dmgType)
 
 	ply.powers[pw_strong] = STR_NONE --Don't do ANY damage if you're dead!
 
-	if cause == nil and src == nil and dmgType & skl.DMG_SKLDTH then --For the unique suicide command.
+	if cause == nil and src == nil and dmgType == skl.DMG_SKLDTH then --For the unique suicide command.
 		return nil
 	elseif not G_CoopGametype() and not G_CompetitionGametype() then --Use (most of) the original death code if in a PVP mode.
 		if dmgType & DMG_DEATHPIT or dmgType & DMG_CRUSHED then
@@ -675,7 +644,7 @@ addHook("MobjDeath", function(target, cause, src, dmgType)
 	end
 end, MT_PLAYER)
 
---Handle skin switching.
+--Handle skin switching + misc.
 addHook("PreThinkFrame", function()
 	for ply in players.iterate() do
 		if not(skl.objectExists(ply)) or not(skl.objectExists(ply.mo)) then continue end --Don't do anything if the player or it's mobj doesn't exist.
@@ -683,35 +652,126 @@ addHook("PreThinkFrame", function()
 
 		local skel = ply.skeleton
 
-		if skel.lastSkin == "skeleton" and ply.mo.skin ~= skel.lastSkin then
-			P_ResetPlayer(ply)
-		elseif ply.mo.skin == "skeleton" and ply.mo.skin ~= skel.lastSkin then
-			idTechSpawn(ply)
+		if ply.mo.skin ~= skel.lastSkin then
+			if ply.mo.skin == "skeleton" and skel.lastSkin ~= "skeleton" then
+				idTechSpawn(ply)
+			elseif ply.mo.skin ~= "skeleton" and skel.lastSkin == "skeleton" then
+				P_ResetPlayer(ply)
+				ply.thrustfactor = skins[ply.mo.skin].thrustfactor --Just in case.
+			end
 		end
-		skel.lastSkin = ply.mo.skin
+
+		if skel.lastSkin ~= ply.mo.skin then skel.lastSkin = ply.mo.skin end
+
+		if not(skl.objectExists(skel.shieldObj)) then skel.shieldObj = nil end
 	end
 end)
 
 --DEBUG--
--- hud.add(function(v, ply, cam)
--- 	local skel = ply.skeleton
+if debug then
+	local massiveTableToLoadNames = {
+		S_PLAY_STND,S_PLAY_WAIT,S_PLAY_WALK,S_PLAY_SKID,S_PLAY_RUN,S_PLAY_DASH,
+		S_PLAY_PAIN,S_PLAY_STUN,S_PLAY_DEAD,S_PLAY_DRWN,S_PLAY_ROLL,S_PLAY_GASP,
+		S_PLAY_JUMP,S_PLAY_SPRING,S_PLAY_FALL,S_PLAY_EDGE,S_PLAY_RIDE,
+		S_PLAY_SPINDASH,S_PLAY_FLY,S_PLAY_SWIM,S_PLAY_FLY_TIRED,
+		S_PLAY_GLIDE,S_PLAY_GLIDE_LANDING,S_PLAY_CLING,S_PLAY_CLIMB,
+		S_PLAY_FLOAT,S_PLAY_FLOAT_RUN,S_PLAY_BOUNCE,S_PLAY_BOUNCE_LANDING,
+		S_PLAY_FIRE,S_PLAY_FIRE_FINISH,S_PLAY_TWINSPIN,
+		S_PLAY_MELEE,S_PLAY_MELEE_FINISH,S_PLAY_MELEE_LANDING,
+		S_PLAY_SUPER_TRANS1,S_PLAY_SUPER_TRANS2,S_PLAY_SUPER_TRANS3,S_PLAY_SUPER_TRANS4,S_PLAY_SUPER_TRANS5,S_PLAY_SUPER_TRANS6,
+		S_OBJPLACE_DUMMY,
+		S_PLAY_BOX1,S_PLAY_BOX2,S_PLAY_ICON1,S_PLAY_ICON2,S_PLAY_ICON3,S_PLAY_SIGN,
+		S_PLAY_NIGHTS_TRANS1,S_PLAY_NIGHTS_TRANS2,S_PLAY_NIGHTS_TRANS3,S_PLAY_NIGHTS_TRANS4,S_PLAY_NIGHTS_TRANS5,S_PLAY_NIGHTS_TRANS6,
+		S_PLAY_NIGHTS_STAND,S_PLAY_NIGHTS_FLOAT,S_PLAY_NIGHTS_FLY,S_PLAY_NIGHTS_DRILL,S_PLAY_NIGHTS_STUN,S_PLAY_NIGHTS_PULL,S_PLAY_NIGHTS_ATTACK,
+		S_TAILSOVERLAY_STAND,S_TAILSOVERLAY_0DEGREES,S_TAILSOVERLAY_PLUS30DEGREES,S_TAILSOVERLAY_PLUS60DEGREES,S_TAILSOVERLAY_MINUS30DEGREES,S_TAILSOVERLAY_MINUS60DEGREES,
+		S_TAILSOVERLAY_RUN,S_TAILSOVERLAY_FLY,S_TAILSOVERLAY_TIRE,S_TAILSOVERLAY_PAIN,S_TAILSOVERLAY_GASP,S_TAILSOVERLAY_EDGE,
+		S_JETFUMEFLASH
+	}
+	local plyAnims = {
+		[PA_ETC] = "PA_ETC",
+		[PA_IDLE] = "PA_IDLE",
+		[PA_EDGE] = "PA_EDGE",
+		[PA_WALK] = "PA_WALK",
+		[PA_RUN] = "PA_RUN",
+		[PA_DASH] = "PA_DASH",
+		[PA_PAIN] = "PA_PAIN",
+		[PA_ROLL] = "PA_ROLL",
+		[PA_JUMP] = "PA_JUMP",
+		[PA_SPRING] = "PA_SPRING",
+		[PA_FALL] = "PA_FALL",
+		[PA_ABILITY] = "PA_ABILITY",
+		[PA_ABILITY2] = "PA_ABILITY2",
+		[PA_RIDE] = "PA_RIDE"
+	}
 
--- 	skl.multilineDrawString(v, 16, 50, {
--- 		"current tic: "..tostring(leveltime),
--- 		"is crouchWalking: "..tostring(skel.crouchWalking),
--- 		"is on ground: "..tostring(P_IsObjectOnGround(ply.mo)),
--- 		"current starpost num: "..tostring(ply.starpostnum),
--- 		"current starpost pos: {x="..tostring(ply.starpostx*FU)..", y="..tostring(ply.starpostx*FU)..", z="..tostring(ply.starpostx*FU).."}",
--- 		"in zoom tube: "..tostring(ply.powers[pw_carry] & CR_ZOOMTUBE ~= 0),
--- 		"wjhTimer: "..tostring(skel.wjhTimer),
--- 		"current z: "..tostring(ply.mo.z),
--- 		"current floorz: "..tostring(ply.mo.floorz),
--- 		"z = floorz?: "..tostring(ply.mo.z == ply.mo.floorz),
--- 		"current ceilingz: "..tostring(ply.mo.ceilingz),
--- 		"ceilingz - floorz: "..tostring(ply.mo.ceilingz - ply.mo.floorz),
--- 		"default height: "..tostring(P_GetPlayerHeight(ply)),
--- 		"current height: "..tostring(ply.mo.height),
--- 		"height check: "..tostring((ply.mo.ceilingz - ply.mo.floorz) < P_GetPlayerHeight(ply)),
--- 		"current momz: "..tostring(ply.mo.momz),
--- 	}, V_SNAPTOLEFT, "thin")
--- end, "game")
+	--Slight modification of Zbizu's printAllGlobals().
+	--(https://gist.github.com/Zbizu/1bd1b3001c1b50cd23011a9ca0f4c689)
+	local function makeStateTable()
+		local tbl = {}
+
+		local seen={}
+		local function dump(t,i)
+			seen[t]=true
+			local s={}
+			local n=0
+			for k, v in pairs(t) do
+				n=n+1
+				s[n]=tostring(k)
+			end
+			table.sort(s)
+			for _,name in ipairs(s) do
+				if string.find(name, "S_") ~= nil then
+					tbl[name] = _G[name]
+				end
+			end
+		end
+
+		dump(_G,"")
+
+		return tbl
+	end
+
+	local function getStateName(stateType)
+		for key,val in pairs(makeStateTable()) do
+			if val == stateType then return key end
+		end
+
+		return "ERROR: NAME UNKNOWN"
+	end
+
+	hud.add(function(v, ply, cam)
+		local skel = ply.skeleton
+		local fof = skl.getFOFBelowPlayer(ply)
+		
+		skl.multilineDrawString(v, 16, 50, {
+			"current tic: "..tostring(leveltime),
+			"current z: "..tostring(ply.mo.z),
+			"current floorz: "..tostring(ply.mo.floorz),
+			"z = floorz?: "..tostring(ply.mo.z == ply.mo.floorz),
+			"current ceilingz: "..tostring(ply.mo.ceilingz),
+			"ceilingz - floorz: "..tostring(ply.mo.ceilingz - ply.mo.floorz),
+			"default height: "..tostring(P_GetPlayerHeight(ply)),
+			"current height: "..tostring(ply.mo.height),
+			"height check: "..tostring((ply.mo.ceilingz - ply.mo.floorz) < P_GetPlayerHeight(ply)),
+			"current momz: "..tostring(ply.mo.momz),
+		}, V_SNAPTOLEFT, "thin")
+
+		skl.multilineDrawString(v, 300-16, 50, {
+			"is crouching: "..tostring(skel.crouching),
+			"is crouchWalking: "..tostring(skel.crouchWalking),
+			"is on ground: "..tostring(P_IsObjectOnGround(ply.mo)),
+			-- "current starpost num: "..tostring(ply.starpostnum),
+			-- "current starpost pos: {x="..tostring(ply.starpostx*FU)..", y="..tostring(ply.starpostx*FU)..", z="..tostring(ply.starpostx*FU).."}",
+			"in zoom tube: "..tostring(ply.powers[pw_carry] & CR_ZOOMTUBE ~= 0),
+			"wjhTimer: "..tostring(skel.wjhTimer),
+			"current player state: "..tostring(getStateName(ply.mo.state)),
+			"current player anim: "..tostring(plyAnims[ply.panim]),
+			-- "current FOF topheight: "..tostring(fof ~= nil and fof.topheight or nil),
+			-- "current FOF bottomheight: "..tostring(fof ~= nil and fof.bottomheight or nil),
+			-- "is spinning: "..tostring(ply.pflags & PF_SPINNING ~= 0),
+			"current raise state: "..tostring(skel.raise.state),
+			"current raise last frame: "..tostring(skel.raise.lastFrame),
+			"current raise last tic: "..tostring(skel.raise.lastTic),
+		}, V_SNAPTORIGHT, "thin-right")
+	end, "game")
+end

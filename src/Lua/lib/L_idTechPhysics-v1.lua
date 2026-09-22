@@ -7,6 +7,8 @@
 	Made by ParaKrei.
 ]]
 
+local debug = false --DON'T FORGET TO SET THIS TO FALSE ON RELEASE!
+
 --Just a clamp function, can be found everywhere at this point.
 --Based off of pgimeno's version on the LÖVE board.
 --(https://love2d.org/forums/viewtopic.php?t=1856 on page 2)
@@ -183,6 +185,8 @@ end
 local function SV_AirMove(ply)
 	local phys = ply.idPhys
 
+	if ply.powers[pw_carry] ~= CR_NONE then return end --Don't do anything if the player is being carried.
+
 	--rmom isn't properly set anymore, so I gotta do it myself!
 	ply.rmomx = ply.mo.momx-ply.cmomx
 	ply.rmomy = ply.mo.momy-ply.cmomy
@@ -278,6 +282,8 @@ rawset(_G, "idTechThinker", function(ply)
 	--Clamp the value into a range, just like the original game.
 	ply.idPhys.ticTime = clamp($, L_DecimalFixed("0.001"), L_DecimalFixed("0.1"))
 
+	if ply.thrustfactor ~= 0 then ply.thrustfactor = 0 end --FORCE thrustfactor to zero always.
+	
 	if ply.powers[pw_carry] == CR_NONE then SV_AirMove(ply) end
 
 	ply.idPhys.lastTic = leveltime
@@ -328,37 +334,59 @@ rawset(_G, "idTechSpawn", function(ply)
 end)
 
 --DEBUG STUFF--
--- addHook("MobjMoveBlocked", function(moving, mobj, line)
--- 	if mobj ~= nil then
--- 		if mobj ~= moving.lastHitMobj then print("BONK! Hit mobj at "..tostring(leveltime)..".") end
--- 	elseif line ~= nil then
--- 		if line ~= moving.lastHitLine then print("BONK! Hit line at "..tostring(leveltime)..".") end
--- 	end
+if debug then
+	addHook("MobjMoveBlocked", function(moving, mobj, line)
+		if mobj ~= nil then
+			if mobj ~= moving.lastHitMobj then print("BONK! Hit mobj at "..tostring(leveltime)..".") end
+		elseif line ~= nil then
+			if line ~= moving.lastHitLine then print("BONK! Hit line at "..tostring(leveltime)..".") end
+		end
 
--- 	if mobj ~= nil then moving.lastHitMobj = mobj end
--- 	if line ~= nil then moving.lastHitLine = line end
--- end, MT_PLAYER)
+		if mobj ~= nil then moving.lastHitMobj = mobj end
+		if line ~= nil then moving.lastHitLine = line end
+	end, MT_PLAYER)
 
--- hud.add(function(v, ply, cam)
--- 	local phys = ply.idPhys
--- 	local plySkin = skins[ply.mo.skin]
+	--Helper function to quickly draw a list on the HUD.
+	local function multilineDrawString(v, x, y, strings, flags, align)
+		if v == nil then return end
 
-	-- v.drawString(16,100,"mom.xy: "..tostring(ply.mo.momx)..", "..tostring(ply.mo.momy), V_SNAPTOLEFT, "thin")
-	-- v.drawString(16,100+12,"mom.xy-cmom: "..tostring(ply.mo.momx-ply.cmomx)..", "..tostring(ply.mo.momx-ply.cmomy), V_SNAPTOLEFT, "thin")
-	-- v.drawString(16,100+(12*2),"rmom: "..tostring(ply.rmomx)..", "..tostring(ply.rmomy), V_SNAPTOLEFT, "thin")
-	-- v.drawString(16,100+(12*3),"speed: "..tostring(ply.speed), V_SNAPTOLEFT, "thin")
-	-- v.drawString(16,100+(12*4),"momz: "..tostring(ply.mo.momz), V_SNAPTOLEFT, "thin")
-	-- v.drawString(16,100+(12*5),"z: "..tostring(ply.mo.z), V_SNAPTOLEFT, "thin")
-	
-	-- v.drawString(320-100,100,"maxspeed: "..tostring(phys.maxspeed), V_SNAPTORIGHT, "thin")
-	-- v.drawString(320-100,100+12,"accelerate: "..tostring(phys.accelerate), V_SNAPTORIGHT, "thin")
-	-- v.drawString(320-100,100+(12*2),"ticTime: "..tostring(phys.ticTime), V_SNAPTORIGHT, "thin")
-	-- v.drawString(320-100,100+(12*3),"movefactor: "..tostring(ply.mo.movefactor), V_SNAPTORIGHT, "thin")
-	-- v.drawString(320-100,100,"wishDir: "..tostring(phys.wishDir[1])..", "..tostring(phys.wishDir[2]), V_SNAPTORIGHT, "thin")
-	-- v.drawString(320-100,100+12,"wishSpeed: "..tostring(phys.wishSpeed), V_SNAPTORIGHT, "thin")
-	-- v.drawString(320-100,100+(12*2),"wishVelocity: "..tostring(phys.wishVelocity[1])..", "..tostring(phys.wishVelocity[2]), V_SNAPTORIGHT, "thin")
-	-- v.drawString(320-100,100+(12*3),"wishMove: "..tostring(phys.wishMove), V_SNAPTORIGHT, "thin")
-	-- v.drawString(320-100,100+(12*4),"wishAngle: "..tostring(phys.wishAngle), V_SNAPTORIGHT, "thin")
-	-- v.drawString(320-100,100+(12*5),"wasInWater: "..tostring(phys.wasInWater), V_SNAPTORIGHT, "thin")
-	-- v.drawString(320-100,100+(12*6),"IsOnGround: "..tostring(P_IsObjectOnGround(ply.mo)), V_SNAPTORIGHT, "thin")
--- end, "game")
+		if strings == nil or type(strings) ~= "table" then strings = {""} end
+
+		if x == nil or type(x) ~= "number" then x = 0 end
+		if y == nil or type(y) ~= "number" then y = 0 end
+		
+		local offset = 12
+		for i,str in pairs(strings) do
+			v.drawString(x, (y-offset)+(offset*i), str, flags, align)
+		end
+	end
+
+	hud.add(function(v, ply, cam)
+		local phys = ply.idPhys
+		local plySkin = skins[ply.mo.skin]
+
+		multilineDrawString(v, 16, 50, {
+			"position: x="..tostring(ply.mo.x)..", y="..tostring(ply.mo.y)..", z="..tostring(ply.mo.z),
+			"mom.xy: "..tostring(ply.mo.momx)..", "..tostring(ply.mo.momy),
+			"mom.xy-cmom: "..tostring(ply.mo.momx-ply.cmomx)..", "..tostring(ply.mo.momx-ply.cmomy),
+			"rmom: "..tostring(ply.rmomx)..", "..tostring(ply.rmomy),
+			"speed: "..tostring(ply.speed),
+			"momz: "..tostring(ply.mo.momz),
+			"IsOnGround: "..tostring(P_IsObjectOnGround(ply.mo)),
+			"movefactor: "..tostring(ply.mo.movefactor),
+			"IsInZoomTube: "..tostring(ply.powers[pw_carry] & CR_ZOOMTUBE ~= 0)
+		}, V_SNAPTOLEFT, "thin")
+
+		multilineDrawString(v, 320-16, 50, {
+			"maxspeed: "..tostring(phys.maxspeed),
+			"accelerate: "..tostring(phys.accelerate),
+			"ticTime: "..tostring(phys.ticTime),
+			"wishDir: "..tostring(phys.wishDir[1])..", "..tostring(phys.wishDir[2]),
+			"wishSpeed: "..tostring(phys.wishSpeed),
+			"wishVelocity: "..tostring(phys.wishVelocity[1])..", "..tostring(phys.wishVelocity[2]),
+			"wishMove: "..tostring(phys.wishMove),
+			"wishAngle: "..tostring(phys.wishAngle),
+			"wasInWater: "..tostring(phys.wasInWater)
+		}, V_SNAPTORIGHT, "thin-right")
+	end, "game")
+end

@@ -421,7 +421,7 @@ addHook("PreThinkFrame", function()
 		local hellfire = ply.hellfireHealth
 
 		if skel.compat.gotHit then
-			if hellfire.health > 1 then
+			if hellfire.health > 1 and not(hellfire.notAllowed) and not(hellfire.options.disabled) then
 				if (ply.rings == 0 and ply.powers[pw_shield] == SH_NONE) then
 					local oldFlashing = ply.powers[pw_flashing] --Store the current flashing tics.
 					ply.powers[pw_flashing] = 0 --Set flashing to zero so directDmg runs immediately.
@@ -443,7 +443,8 @@ addHook("ShouldDamage", function(target, cause, src, dmg, dmgType)
 	local skel = ply.skeleton
 	local hellfire = ply.hellfireHealth
 
-	if hellfire.health == 1 and skl.canPlayerBeHurt(ply) then
+	if hellfire.health == 1 and skl.canPlayerBeHurt(ply)
+	and not(hellfire.notAllowed) and not(hellfire.options.disabled) then
 		skl.gotHit(ply)
 		hf.directLoss(ply)
 		P_DoPlayerPain(ply, cause, src)

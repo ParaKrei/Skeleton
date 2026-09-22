@@ -1,7 +1,7 @@
 --[[
 Skeleton; created by ParaKrei and JimSquid.
 
-Mod started on January 28, 2026, completed on September 6, 2026.
+Mod started on January 28, 2026, completed on September 22, 2026 (was originally finished on the 7th, but some nasty bugs were found).
 
 Some functions are from Metroid Vanguard (Samus).
 ]]
