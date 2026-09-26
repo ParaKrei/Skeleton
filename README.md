@@ -1,5 +1,4 @@
-<!-- <img src="./assets/HellfireHealthLogo.png" alt="Hellfire Health" width="500"/> -->
-<p>LOGO HERE<\p>
+<img src="./assets/SkeletonLogo.png" alt="SKELETON" width="500"/>
 <hr>
 <p>Hello, and welcome to the repository of the Skeleton!</p>
 <p>Here you can view it's code, and the raw asset files!</p>
