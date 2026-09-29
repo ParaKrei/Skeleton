@@ -454,3 +454,81 @@ addHook("ShouldDamage", function(target, cause, src, dmg, dmgType)
 		return false
 	end
 end, MT_PLAYER)
+
+--Metroid Vanguard--
+--Metroid stuff
+
+--Little helper function to get a Metroid off of the player.
+local function FuckOffMetroid(metroid, victim)
+	--Give the Metroid some momentum to get away from the player.
+	local momentum = {
+		x=victim.momx,
+		y=victim.momy
+	}
+	if victim.player.speed <= 22<<16 then
+		momentum.x = P_ReturnThrustX(victim, victim.angle, 250*FU)
+		momentum.y = P_ReturnThrustY(victim, victim.angle, 250*FU)
+	end
+
+	metroid.momx = momentum.x*-1
+	metroid.momy = momentum.y*-1
+	metroid.momz = 2<<16
+
+	S_StartSound(metroid, sfx_mtrd2) --pain sound
+
+	--Stun the Metroid.
+	metroid.stuntroid = 30*2
+	metroid.latchsuck = 0
+	metroid.actiontroid = P_RandomRange(37, 65)
+
+	P_SamFP(victim.player, PAL_RECYCLE, 3) --visual feedback
+
+	metroid.latchtarget = nil --detach from the player
+
+	--Move the Metroid somewhere else.
+	for dir = 1,18
+		if P_TryMove(metroid,
+		metroid.x+FixedMul(-50<<16, cos(ANG20*dir)),
+		metroid.y+FixedMul(-50<<16, sin(ANG20*dir)),
+		false) then return end
+	end
+end
+
+addHook("PlayerThink", function(ply)
+	if not(skl.objectExists(ply)) or not(skl.objectExists(ply.mo)) then return end --Don't do anything if the player or it's mobj doesn't exist.
+	if ply.mo.skin ~= "skeleton" then return end --ONLY for the skeleton.
+
+	local skel = ply.skeleton
+
+	if ply.mo.metroidsnack then --AAAAAAAAAAAAAAAAAA
+		--Find the attacker
+		if skel.metroid == nil or not(skl.objectExists(skel.metroid)) then
+			for mobj in mobjs.iterate() do
+				if mobj.latchtarget ~= nil then
+					if mobj.latchtarget == ply.mo then
+						skel.metroid = mobj
+						break
+					end
+				end
+			end
+		end
+
+		if skel.metroid == nil then return --Must be dead.
+		else
+			if ply.rings == 0 then --Only do stuff if the player has no rings.
+				local survival = skel.metroid.latchsuck
+				if survival ~= nil then
+					if survival <= 5 then --Get off of me!
+						FuckOffMetroid(skel.metroid, ply.mo)
+						skel.metroid = nil
+					end
+				end
+			end
+
+			if ply.cmd.buttons & BT_CUSTOM1 then
+				FuckOffMetroid(skel.metroid, ply.mo)
+				skel.metroid = nil
+			end
+		end
+	end
+end)

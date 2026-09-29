@@ -81,6 +81,24 @@
 			}
 		},
 		{
+			"label": "Test with Metroid Vanguard",
+			"detail": "Test it with Samus!",
+			"type": "shell",
+			"command": [
+				"pwsh test.ps1",
+				"-gameExe '${config:SRB2Project.executable}'",
+				"-pathFile '.paths${/}testPath.txt'",
+				"-mods SMCL_Samus-v1.5d.pk3 L_AdminToolsPlus_v1.2.lua",
+				"-mapName map01",
+				"-targetSkin skeleton"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			}
+		},
+		{
 			"label": "Test with 2011x",
 			"detail": "Test it with 2011x!",
 			"type": "shell",
