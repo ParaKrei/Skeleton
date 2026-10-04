@@ -376,10 +376,8 @@ addHook("PlayerThink", function(ply)
 			--Reset any tunneling.
 			exe_forcetarget = -1
 			
-			--Murder the rage music if it's running.
-			-- if skl.objectExists(consoleplayer) and S_MusicName(consoleplayer) == exe_ragemusic then
-				-- P_RestoreMusic(consoleplayer)
-			-- end
+			--Restore the music, as X takes the music down with him.
+			P_RestoreMusic(consoleplayer)
 
 			skl.P_BlastAway(ply.mo)
 
