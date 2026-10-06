@@ -9,7 +9,7 @@ Some functions are from Metroid Vanguard (Samus).
 --Create global object to hold everything--
 rawset(_G, "skl", {})
 
---Compatibility function table--
+--Compatibility table--
 if skl["compat"] == nil then
 	skl["compat"] = {}
 end
@@ -95,6 +95,7 @@ addHook("NetVars", function(net)
 	skl.bosses = net(skl.bosses)
 	skl.misc = net(skl.misc)
 	skl.hug = net(skl.hug)
+	skl.compat = net(skl.compat)
 end)
 
 --(https://youtu.be/ou7GZDeOp3g) [Don't worry, this is NOT a rick-roll; it's one of the sources of inspiration for this mod.]--

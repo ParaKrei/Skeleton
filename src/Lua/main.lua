@@ -541,7 +541,7 @@ addHook("ShouldDamage", function(target, cause, src, dmg, dmgType)
 		else
 			return nil
 		end
-	elseif (skl.objectExists(cause) and cause.flags & MF_SHOOTABLE) --The mobj will die soon anyways.
+	elseif (skl.objectExists(cause) and cause.flags & MF_ENEMY and cause.flags & MF_SPECIAL and cause.flags & MF_SHOOTABLE) --The mobj will die soon anyways.
 	or ply.mo.state == S_SKEL_BREAK
 	or dmgType & DMG_DEATHMASK
 	or dmgType == DMG_FIRE --Immunity to ALL fire attacks.

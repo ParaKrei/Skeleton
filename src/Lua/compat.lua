@@ -276,9 +276,14 @@ end)
 
 --2011x--
 if not(rawget(_G, "MT_SONICEXE")) then freeslot("MT_SONICEXE") end --I need the MOBJ type, so I'll attempt to use the method 2011x uses.
-if not(rawget(_G, "sfx_xscrea")) then freeslot("sfx_xscrea") end --I need this sound, so I'll attempt to use the method 2011x uses.
+if not(rawget(_G, "sfx_xscrea")) then freeslot("sfx_xscrea") end --I need this sound too.
+if not(rawget(_G, "sfx_xkill")) then freeslot("sfx_xkill") end --I need this sound too.
+if not(rawget(_G, "sfx_xdeath")) then freeslot("sfx_xdeath") end --I need this sound too.
+if not(rawget(_G, "S_EXETAUNT")) then freeslot("S_EXETAUNT") end --I need this state too.
+if not(rawget(_G, "S_EXEGLOAT")) then freeslot("S_EXEGLOAT") end --I need this state too.
 if not(rawget(_G, "EXE_SpawnBlood")) then --I need this function, so I'll free up a slot for it and put in a placeholder.
 	rawset(_G, "EXE_SpawnBlood", function()
+		print("ERROR: EXE_SpawnBlood isn't defined!")
 		print("If you see this, report this to ParaKrei immediately!")
 	end)
 end
@@ -289,6 +294,7 @@ addHook("MapLoad", function()
 		if ply.skeleton == nil then continue end
 		local skel = ply.skeleton
 
+		--Player's table
 		if skel.compat.X == nil then skel.compat.X = {} end
 
 		skel.compat.X.beingGrabbed = false
@@ -297,6 +303,20 @@ addHook("MapLoad", function()
 		skel.compat.X.resetTic = 0
 		skel.compat.X.victim = nil
 	end
+
+	--Global table
+	if skl.compat.X == nil then skl.compat.X = {} end
+	skl.compat.X.deathCount = 0
+
+	--Aggressively change the EXE_WouldDie function, as my other methods don't work anymore.
+	local ogWouldDie = rawget(_G, "EXE_WouldDie")
+	rawset(_G, "EXE_WouldDie", function(target)
+		if target.skin == "skeleton" and exerage or exe_ragetime then
+			return P_RandomChance(FU/100) --X can randomly decide to grab you.
+		end
+
+		ogWouldDie(target)
+	end)
 end)
 
 --Blow up X if he grabs the Skeleton.
@@ -306,9 +326,8 @@ addHook("PlayerThink", function(ply)
 	if ply.mo.skin ~= "skeleton" then return end --ONLY for the skeleton.
 	if ply.skeleton == nil then return end --Can't do anything yet.
 
-	local skel = ply.skeleton
-	
 	--Setup variables for easy access.
+	local skel = ply.skeleton
 	local X = exe_active or activeexe
 
 	if X ~= 0 and skl.objectExists(X) then
@@ -358,7 +377,13 @@ addHook("PlayerThink", function(ply)
 			P_StartQuake(9*FU, TICRATE/6, {x=ply.mo.x, y=ply.mo.y, z=ply.mo.z}, 512*FU)
 			
 			--Just delete X, then start the stuff to spawn him again.
-			EXE_SpawnBlood(X.victim, 2*FU)
+			for i=1,10 do
+				if i % 2 == 0 then
+					EXE_SpawnBlood(X.victim, -2*FU)
+				else
+					EXE_SpawnBlood(X.victim, 2*FU)
+				end
+			end
 			P_RemoveMobj(X.victim)
 			X.victim = nil
 
@@ -375,6 +400,18 @@ addHook("PlayerThink", function(ply)
 			exe_blackout = false
 			--Reset any tunneling.
 			exe_forcetarget = -1
+
+			--Track the amount of times X has blown up.
+			if skl.compat.X.deathCount >= 3 then --X is quite pissed now; so start rage mode!
+				exe_timer = 1 --Spawn X immediately
+				exe_forcetarget = ply.mo --Tunnel the Skeleton player
+				exe_ragetime = -1 --Rage will start next tic
+				exe_ragedone = true
+
+				skl.compat.X.deathCount = 0 --Reset the tracker
+			else
+				skl.compat.X.deathCount = $+1 --Increment tracker
+			end
 			
 			--Restore the music, as X takes the music down with him.
 			P_RestoreMusic(consoleplayer)
@@ -404,6 +441,44 @@ addHook("PlayerThink", function(ply)
 			ply.mo.colorized = false
 			ply.mo.renderflags = $ & ~RF_FULLBRIGHT
 			S_StartSound(ply.mo, sfx_skexp)
+		end
+	end
+end)
+
+--Have X taunt the Skeleton in rage mode.
+addHook("PlayerThink", function(ply)
+	if not(skl.objectExists(ply)) or not(skl.objectExists(ply.mo)) then return end --Don't do anything if the player or it's mobj doesn't exist.
+	if ply.mo.skin ~= "skeleton" then return end --ONLY for the skeleton.
+	if ply.skeleton == nil then return end --Can't do anything yet.
+
+	--Setup variables for easy access.
+	local skel = ply.skeleton
+	local X = exe_active or activeexe
+
+	if X == nil then return end --Can't do anything if 2011x doesn't exist!
+
+	if X ~= nil and X.target ~= ply.mo then return end --None of this will work if the player isn't X's target.
+
+	if (exerage or exe_ragetime) then
+		--If X rolled the grab, let him blow up WITHOUT breaking the Skeleton.
+		if X.gotcha then
+			ply.pflags = $|PF_GODMODE
+		end
+		--Stop the sounds that play upon X murdering someone.
+		if X.state == S_EXEGLOAT then
+			S_StopSoundByID(ply.mo, sfx_xkill)
+			S_StopSoundByID(nil, sfx_xdeath)
+
+			ply.pflags = $ & ~PF_GODMODE --Remove god mode.
+		end
+
+		if ply.mo.state == S_SKEL_BREAK then
+			if X.state ~= S_EXETAUNT then
+				exe_hallucination = true
+				X.state = S_EXETAUNT
+			end
+		elseif exe_hallucination then
+			exe_hallucination = false
 		end
 	end
 end)

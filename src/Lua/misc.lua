@@ -460,6 +460,41 @@ skl["tableRemove"] = function(table, target)
 	end
 end
 
+--Gets the name of a variable within the global table.
+--Original by Zbizu (https://gist.github.com/Zbizu/1bd1b3001c1b50cd23011a9ca0f4c689).
+skl["getTrueName"] = function(valueToFind, prefix)
+	local function makePrefixTable(prefix)
+		local tbl = {}
+
+		local seen={}
+		local function dump(t,i)
+			seen[t]=true
+			local s={}
+			local n=0
+			for k, v in pairs(t) do
+				n=n+1
+				s[n]=tostring(k)
+			end
+			table.sort(s)
+			for _,name in ipairs(s) do
+				if string.find(name, prefix) ~= nil then
+					tbl[name] = _G[name]
+				end
+			end
+		end
+
+		dump(_G,"")
+
+		return tbl
+	end
+
+	for key,val in pairs(makePrefixTable(prefix)) do
+		if val == valueToFind then return key end
+	end
+
+	return "ERROR: NAME UNKNOWN"
+end
+
 --A little function that will try to use P_SetOrigin, and fallback to P_TeleportMove if it doesn't work; this is to keep compatibility with pre-2.2.11.
 skl["setMobjPos"] = function(mobj, x, y, z)
 	if pcall(P_SetOrigin, mobj, x, y, z) ~= true then

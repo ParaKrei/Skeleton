@@ -106,7 +106,7 @@
 				"pwsh test.ps1",
 				"-gameExe '${config:SRB2Project.executable}'",
 				"-pathFile '.paths${/}testPath.txt'",
-				"-mods L_2011x-v1.5.pk3",
+				"-mods L_2011x-v1.6.0.1.pk3",
 				"-mapName map01",
 				"-targetSkin skeleton"
 			],

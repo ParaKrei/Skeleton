@@ -45,7 +45,7 @@ addHook("MobjThinker", function(ring)
 			if ring.sprite ~= SPR_SKGB then
 				ring.sprite = SPR_SKGB
 				ring.frame = 0
-				ring.color = ply.mo.color
+				ring.color = SKINCOLOR_LEMON --Ring-colored bones
 				ring.spinamt = FixedAngle(P_SignedRandom()*FU)
 			end
 
