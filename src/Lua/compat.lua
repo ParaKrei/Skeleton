@@ -308,14 +308,16 @@ addHook("MapLoad", function()
 	if skl.compat.X == nil then skl.compat.X = {} end
 	skl.compat.X.deathCount = 0
 
-	--Aggressively change the EXE_WouldDie function, as my other methods don't work anymore.
-	local ogWouldDie = rawget(_G, "EXE_WouldDie")
+	--Since MobjCollide is too slow to do any changes, I have to directly modify EXE_WouldDie do get the old functionality back.
+	--This method should also be more consistant and keep working every update.
+	--I don't really like having to modify a function like this, but I didn't have much of a choice.
+	local func_super = rawget(_G, "EXE_WouldDie")
 	rawset(_G, "EXE_WouldDie", function(target)
 		if target.skin == "skeleton" and exerage or exe_ragetime then
 			return P_RandomChance(FU/100) --X can randomly decide to grab you.
 		end
 
-		ogWouldDie(target)
+		func_super(target)
 	end)
 end)
 
