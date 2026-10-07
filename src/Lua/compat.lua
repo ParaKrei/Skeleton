@@ -317,7 +317,7 @@ addHook("MapLoad", function()
 			return P_RandomChance(FU/100) --X can randomly decide to grab you.
 		end
 
-		func_super(target)
+		return func_super(target)
 	end)
 end)
 
