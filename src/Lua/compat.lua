@@ -290,6 +290,7 @@ end
 
 --Reset X-related variables here, as PlayerSpawn doesn't properly clear it.
 addHook("MapLoad", function()
+	print("SKELETON: MapLoad has ran!")
 	for ply in players.iterate() do
 		if ply.skeleton == nil then continue end
 		local skel = ply.skeleton
@@ -307,17 +308,38 @@ addHook("MapLoad", function()
 	--Global table
 	if skl.compat.X == nil then skl.compat.X = {} end
 	skl.compat.X.deathCount = 0
+end)
 
+--Define function overrides in AddonLoaded so it's defined no matter what, and is only ran once.
+addHook("AddonLoaded", function()
 	--Since MobjCollide is too slow to do any changes, I have to directly modify EXE_WouldDie do get the old functionality back.
 	--This method should also be more consistant and keep working every update.
 	--I don't really like having to modify a function like this, but I didn't have much of a choice.
 	local func_super = rawget(_G, "EXE_WouldDie")
 	rawset(_G, "EXE_WouldDie", function(target)
-		if target.skin == "skeleton" and exerage or exe_ragetime then
-			return P_RandomChance(FU/100) --X can randomly decide to grab you.
+		if target.skin == "skeleton" then
+			if exerage or exe_ragetime then
+				return P_RandomChance(FU/100) --X can randomly decide to grab you.
+			elseif CV_FindVar("exe_ordinarymode").value then
+				return P_RandomChance(FU/50) --Just like rage mode, but with a higher chance.
+			end
 		end
 
 		return func_super(target)
+	end)
+
+	--Gotta do the same thing to EXE_IsValidTarget so I can make X NOT target a downed Skeleton.
+	local func2_super = rawget(_G, "EXE_IsValidTarget")
+	rawset(_G, "EXE_IsValidTarget", function(mobj, targetFinished, noForce)
+		local result = func2_super(mobj, targetFinished, noForce)
+
+		if result then
+			if mobj.skin == "skeleton" then
+				if not(mobj.state == S_SKEL_BREAK) then return true else return false end
+			end
+		end
+
+		return result
 	end)
 end)
 
@@ -403,6 +425,8 @@ addHook("PlayerThink", function(ply)
 			--Reset any tunneling.
 			exe_forcetarget = -1
 
+			ply.ordinary = false
+
 			--Track the amount of times X has blown up.
 			if skl.compat.X.deathCount >= 3 then --X is quite pissed now; so start rage mode!
 				exe_timer = 1 --Spawn X immediately
@@ -461,7 +485,7 @@ addHook("PlayerThink", function(ply)
 
 	if X ~= nil and X.target ~= ply.mo then return end --None of this will work if the player isn't X's target.
 
-	if (exerage or exe_ragetime) then
+	if exerage or exe_ragetime or CV_FindVar("exe_ordinarymode").value then
 		--If X rolled the grab, let him blow up WITHOUT breaking the Skeleton.
 		if X.gotcha then
 			ply.pflags = $|PF_GODMODE
@@ -472,15 +496,6 @@ addHook("PlayerThink", function(ply)
 			S_StopSoundByID(nil, sfx_xdeath)
 
 			ply.pflags = $ & ~PF_GODMODE --Remove god mode.
-		end
-
-		if ply.mo.state == S_SKEL_BREAK then
-			if X.state ~= S_EXETAUNT then
-				exe_hallucination = true
-				X.state = S_EXETAUNT
-			end
-		elseif exe_hallucination then
-			exe_hallucination = false
 		end
 	end
 end)
